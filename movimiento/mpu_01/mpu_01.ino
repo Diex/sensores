@@ -14,10 +14,6 @@ MPU6050 mpu;
 
 #define INTERRUPT_PIN 12  //D6
 // PINOUT https://github.com/esp8266/Arduino/blob/master/variants/nodemcu/pins_arduino.h#L37-L59
-//#define PIN_WIRE_SDA (4)
-//#define PIN_WIRE_SCL (5)
-//static const uint8_t SDA = PIN_WIRE_SDA;
-//static const uint8_t SCL = PIN_WIRE_SCL;
 #define LED_PIN 2 
 bool blinkState = false;
 
@@ -49,8 +45,13 @@ void dmpDataReady() {
 }
 
 void setup() {
-  
-//    Wire.begin();
+// Como estoy usando un nodemcu tengo que configurar los pines correctamente porque no corresponden con el pinout de arduino
+// i2cdevlib hace:
+//#define PIN_WIRE_SDA (4)
+//#define PIN_WIRE_SCL (5)
+//static const uint8_t SDA = PIN_WIRE_SDA;
+//static const uint8_t SCL = PIN_WIRE_SCL;
+// pero si no incializo Wire con parámetros hace otra cosa...
     Wire.begin(D4,D5);
     Wire.setClock(400000);
 
