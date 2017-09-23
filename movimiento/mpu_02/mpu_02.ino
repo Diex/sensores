@@ -18,35 +18,52 @@
 //      2012-05-30 - basic DMP initialization working
 
 /* ============================================
-I2Cdev device library code is placed under the MIT license
-Copyright (c) 2012 Jeff Rowberg
+  I2Cdev device library code is placed under the MIT license
+  Copyright (c) 2012 Jeff Rowberg
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-===============================================
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
+  ===============================================
 */
 
 /*
- * sensor de copa para bruno
- * usa MPU6050 + nodemcu
- * version 1: cuaternion sobre tcp (wifi)
- * 
- */
+   sensor de copa para bruno
+   usa MPU6050 + nodemcu
+   version 1: cuaternion sobre tcp (wifi)
+
+*/
+// WIFI
+
+#include <ESP8266WiFi.h>
+#include <ESP8266WiFiMulti.h>
+
+
+#include <WiFiUdp.h>
+#include <OSCMessage.h>                // for sending OSC messages
+
+ESP8266WiFiMulti WiFiMulti;
+
+WiFiUDP Udp;                           // A UDP instance to let us send and receive packets over UDP
+const IPAddress destIp(192,168,0,3);   // remote IP of the target device
+const unsigned int destPort = 12000;    // remote port of the target device where the NodeMCU sends OSC to
+const unsigned int localPort = 8000;   // local port to listen for UDP packets at the NodeMCU (another device must send OSC messages to this port)
+
+
 
 // I2Cdev and MPU6050 must be installed as libraries, or else the .cpp/.h files
 // for both classes must be in the include path of your project
@@ -58,7 +75,7 @@ THE SOFTWARE.
 // Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
 // is used in I2Cdev.h
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-    #include "Wire.h"
+#include "Wire.h"
 #endif
 
 
@@ -75,10 +92,10 @@ MPU6050 mpu;
    depends on the MPU-6050's INT pin being connected to the Arduino's
    external interrupt #0 pin. On the Arduino Uno and Mega 2560, this is
    digital I/O pin 2.
- * ========================================================================= */
+   ========================================================================= */
 #define INTERRUPT_PIN 12  //D6
 // PINOUT https://github.com/esp8266/Arduino/blob/master/variants/nodemcu/pins_arduino.h#L37-L59
-// 
+//
 
 /* =========================================================================
    NOTE: Arduino v1.0.1 with the Leonardo board generates a compile error
@@ -89,7 +106,7 @@ MPU6050 mpu;
 
    http://arduino.cc/forum/index.php/topic,109987.0.html
    http://code.google.com/p/arduino/issues/detail?id=958
- * ========================================================================= */
+   ========================================================================= */
 
 
 #define LED_PIN 13 // (Arduino is 13, Teensy is 11, Teensy++ is 6)
@@ -111,7 +128,7 @@ VectorInt16 aaWorld;    // [x, y, z]            world-frame accel sensor measure
 VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-int gyro[3];           // 
+int gyro[3];           //
 
 
 // ================================================================
@@ -120,7 +137,7 @@ int gyro[3];           //
 
 volatile bool mpuInterrupt = false;     // indicates whether MPU interrupt pin has gone high
 void dmpDataReady() {
-    mpuInterrupt = true;
+  mpuInterrupt = true;
 }
 
 
@@ -134,8 +151,10 @@ void dmpDataReady() {
 // ================================================================
 
 void setup() {
-    // join I2C bus (I2Cdev library doesn't do this automatically)
-    #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+  setupWifi();
+
+  // join I2C bus (I2Cdev library doesn't do this automatically)
+#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
 
   // Como estoy usando un nodemcu tengo que configurar los pines correctamente porque no corresponden con el pinout de arduino
   // i2cdevlib hace:
@@ -143,30 +162,30 @@ void setup() {
   //#define PIN_WIRE_SCL (5)
   //static const uint8_t SDA = PIN_WIRE_SDA;
   //static const uint8_t SCL = PIN_WIRE_SCL;
-  
+
   // tengo que inicializar wire asi:
   // Si tengo el error de que DA no existe, recordar de cambiar board a nodemcu.
-        Wire.begin(D4,D5);    // 'D4' no es '4' cuando cambio de arduino a nodemcu. igual tengo que investigarlo un poco mas. así me funciona. 
-        Wire.setClock(400000); // 400kHz I2C clock. Comment this line if having compilation difficulties
-    #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
-        Fastwire::setup(400, true);
-    #endif
+  Wire.begin(D4, D5);   // 'D4' no es '4' cuando cambio de arduino a nodemcu. igual tengo que investigarlo un poco mas. así me funciona.
+  Wire.setClock(400000); // 400kHz I2C clock. Comment this line if having compilation difficulties
+#elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
+  Fastwire::setup(400, true);
+#endif
 
-    // initialize serial communication
-    Serial.begin(115200);
+  // initialize serial communication
+  Serial.begin(115200);
 
-    initDevice();
-    
-    // supply your own gyro offsets here, scaled for min sensitivity
-//    mpu.setXGyroOffset(220);
-//    mpu.setYGyroOffset(76);
-//    mpu.setZGyroOffset(-85);
-//    mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
+  initDevice();
+
+  // supply your own gyro offsets here, scaled for min sensitivity
+  //    mpu.setXGyroOffset(220);
+  //    mpu.setYGyroOffset(76);
+  //    mpu.setZGyroOffset(-85);
+  //    mpu.setZAccelOffset(1788); // 1688 factory default for my test chip
 
 
-    // configure LED for output
-    pinMode(LED_PIN, OUTPUT);
-    digitalWrite(LED_PIN, HIGH);
+  // configure LED for output
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, HIGH);
 }
 
 
@@ -176,55 +195,60 @@ void setup() {
 // ================================================================
 
 void loop() {
-    // if programming failed, don't try to do anything
-    if (!dmpReady) {
-      digitalWrite(LED_PIN, LOW);
-      return;
-    }
+  // if programming failed, don't try to do anything
+  if (!dmpReady) {
+    digitalWrite(LED_PIN, LOW);
+    return;
+  }
 
-    // wait for MPU interrupt or extra packet(s) available
-    while (!mpuInterrupt && fifoCount < packetSize) {
-        // other program behavior stuff here
-        // .
-        // .
-        // .
-        // if you are really paranoid you can frequently test in between other
-        // stuff to see if mpuInterrupt is true, and if so, "break;" from the
-        // while() loop to immediately process the MPU data
-        // .
-        // .
-        // .
-    }
+  // wait for MPU interrupt or extra packet(s) available
+  while (!mpuInterrupt && fifoCount < packetSize) {
+    // other program behavior stuff here
+    // leo el quat y lo mando por osc
+    mpu.dmpGetQuaternion(&q, fifoBuffer);
+    // read btnInput and send OSC
+    OSCMessage msgOut("/1/quat");
+    msgOut.add(q.w);
+    msgOut.add(q.x);
+    msgOut.add(q.y);
+    msgOut.add(q.z);
+    
+    Udp.beginPacket(destIp, destPort);
+    msgOut.send(Udp);
+    Udp.endPacket();
+    msgOut.empty();
+//    delay(1000);
+  }
 
-    // reset interrupt flag and get INT_STATUS byte
-    mpuInterrupt = false;
-    mpuIntStatus = mpu.getIntStatus();
+  // reset interrupt flag and get INT_STATUS byte
+  mpuInterrupt = false;
+  mpuIntStatus = mpu.getIntStatus();
 
-    // get current FIFO count
-    fifoCount = mpu.getFIFOCount();
+  // get current FIFO count
+  fifoCount = mpu.getFIFOCount();
 
-    // check for overflow (this should never happen unless our code is too inefficient)
-    if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
-        // reset so we can continue cleanly
-        mpu.resetFIFO();
-        Serial.println(F("FIFO overflow!"));
+  // check for overflow (this should never happen unless our code is too inefficient)
+  if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
+    // reset so we can continue cleanly
+    mpu.resetFIFO();
+    Serial.println(F("FIFO overflow!"));
 
     // otherwise, check for DMP data ready interrupt (this should happen frequently)
-    } else if (mpuIntStatus & 0x02) {
-        // wait for correct available data length, should be a VERY short wait
-        while (fifoCount < packetSize) fifoCount = mpu.getFIFOCount();
+  } else if (mpuIntStatus & 0x02) {
+    // wait for correct available data length, should be a VERY short wait
+    while (fifoCount < packetSize) fifoCount = mpu.getFIFOCount();
 
-        // read a packet from FIFO
-        mpu.getFIFOBytes(fifoBuffer, packetSize);
-        
-        // track FIFO count here in case there is > 1 packet available
-        // (this lets us immediately read more without waiting for an interrupt)
-        fifoCount -= packetSize;
+    // read a packet from FIFO
+    mpu.getFIFOBytes(fifoBuffer, packetSize);
 
-        debug();
+    // track FIFO count here in case there is > 1 packet available
+    // (this lets us immediately read more without waiting for an interrupt)
+    fifoCount -= packetSize;
 
-        // blink LED to indicate activity
-        blinkState = !blinkState;
-        digitalWrite(LED_PIN, blinkState);
-    }
+    debug();
+
+    // blink LED to indicate activity
+    blinkState = !blinkState;
+    digitalWrite(LED_PIN, blinkState);
+  }
 }
