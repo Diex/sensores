@@ -174,11 +174,9 @@ void loop() {
   while (!mpuInterrupt && fifoCount < packetSize) {
     // other program behavior stuff here
     sendOrientationMessage();
-
-    //---
     sendLocalAcceleration();
     sendGyro();
-
+    sendYawPitchRoll();
   }
 
   // reset interrupt flag and get INT_STATUS byte
@@ -269,5 +267,28 @@ void sendLocalAcceleration()
     Udp.endPacket();
     msgOut.empty();
 }
+
+
+void sendYawPitchRoll()
+{
+    mpu.dmpGetQuaternion(&orientation, fifoBuffer);
+    mpu.dmpGetGravity(&gravity, &orientation);
+    mpu.dmpGetYawPitchRoll(ypr, &orientation, &gravity);
+           
+    OSCMessage msgOut("/1/ypr");
+    // en relación al diseño del sensor la librería devuelve:
+    // yaw: (about Z axis)
+    msgOut.add(ypr[0]);
+    // pitch: (nose up/down, about Y axis)
+    msgOut.add(ypr[1]);
+    // roll: (tilt left/right, about X axis)
+    msgOut.add(ypr[2]);
+
+    Udp.beginPacket(destIp, destPort);
+    msgOut.send(Udp);
+    Udp.endPacket();
+    msgOut.empty();
+}
+
 
 

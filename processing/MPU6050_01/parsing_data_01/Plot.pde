@@ -6,7 +6,7 @@ class Plot {
   int h = 0;
   
   PVector origin = new PVector();
-  float scale = 10.;
+  public float scale = 5.;
   Plot(int x, int y, int w, int h) {
     
     this.w = w;
