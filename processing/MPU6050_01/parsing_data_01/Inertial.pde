@@ -10,7 +10,7 @@ class Inertial{
   
   void render(color col){
     fill(col);
-    rect(origin.x, origin.y, h, sample);
+    rect(origin.x, origin.y, h, 0);
     
   }
   

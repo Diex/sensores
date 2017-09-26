@@ -1,43 +1,7 @@
-import toxi.audio.*;
-import toxi.color.*;
-import toxi.color.theory.*;
-import toxi.data.csv.*;
-import toxi.data.feeds.*;
-import toxi.data.feeds.util.*;
-import toxi.doap.*;
 import toxi.geom.*;
-import toxi.geom.mesh.*;
-import toxi.geom.mesh.subdiv.*;
-import toxi.geom.mesh2d.*;
-import toxi.geom.nurbs.*;
-import toxi.image.util.*;
-import toxi.math.*;
-import toxi.math.conversion.*;
-import toxi.math.noise.*;
-import toxi.math.waves.*;
-import toxi.music.*;
-import toxi.music.scale.*;
-import toxi.net.*;
-import toxi.newmesh.*;
-import toxi.nio.*;
-import toxi.physics2d.*;
-import toxi.physics2d.behaviors.*;
-import toxi.physics2d.constraints.*;
-import toxi.physics3d.*;
-import toxi.physics3d.behaviors.*;
-import toxi.physics3d.constraints.*;
-import toxi.processing.*;
-import toxi.sim.automata.*;
-import toxi.sim.dla.*;
-import toxi.sim.erosion.*;
-import toxi.sim.fluids.*;
-import toxi.sim.grayscott.*;
-import toxi.util.*;
-import toxi.util.datatypes.*;
-import toxi.util.events.*;
-import toxi.volume.*;
-
-
+import java.util.Queue;
+import java.util.LinkedList;
+import java.util.ListIterator;
 /**
  * oscP5parsing by andreas schlegel
  * example shows how to parse incoming osc messages "by hand".
@@ -52,18 +16,31 @@ import netP5.*;
 OscP5 oscP5;
 NetAddress myRemoteLocation;
 Quaternion q;
+static final int MAX_QUEUE_SIZE = 2000;
+int plotH = 40;
 
 // ------------------------
 PVector lacc;
 Plot xa;
 Plot ya;
 Plot za;
-int plotH = 40;
+
+LinkedList<Float> xaq = new LinkedList();
+LinkedList<Float> yaq = new LinkedList();
+LinkedList<Float> zaq = new LinkedList();
+
+
 // ------------------------
 PVector rot;
+
 Plot xr;
 Plot yr;
 Plot zr;
+
+LinkedList<Float> xrq = new LinkedList();
+LinkedList<Float> yrq = new LinkedList();
+LinkedList<Float> zrq = new LinkedList();
+
 
 PShape glass;
 PImage pepsi;
@@ -84,18 +61,29 @@ void setup() {
   myRemoteLocation = new NetAddress("127.0.0.1", 8000);
   q = new Quaternion();
   lacc = new PVector();
-  xa = new Plot(width, plotH, -16384, 16384);
-  ya = new Plot(width, plotH, -16384, 16384);
-  za = new Plot(width, plotH, -16384, 16384);
+  xa = new Plot(width, plotH);
+  ya = new Plot(width, plotH);
+  za = new Plot(width, plotH);
+  
   rot = new PVector();
 
-  xr = new Plot(width, plotH, -16384, 16384);
+  xr = new Plot(width, plotH);
   xr.origin.set(0, plotH);
-  yr = new Plot(width, plotH, -16384, 16384);
+  yr = new Plot(width, plotH);
   yr.origin.set(0, plotH);
-  zr = new Plot(width, plotH, -16384, 16384);
+  zr = new Plot(width, plotH);
   zr.origin.set(0, plotH);
 
+  for(int i = 0; i < MAX_QUEUE_SIZE; i++){
+    xaq.add(0.0);
+    yaq.add(0.0);
+    zaq.add(0.0);
+    xrq.add(0.0);
+    yrq.add(0.0);
+    zrq.add(0.0);
+  }
+
+  
 
 
   pepsi = loadImage("Glass.jpg");
@@ -109,20 +97,23 @@ void setup() {
 // +y -Z
 // +z -Y
 
+color red = color(255, 0, 0);
+color green = color(0, 255, 0);
+color blue = color(0, 0, 255);
 
 void draw() {
   background(0);
   fill(127, 127, 127);
   noStroke();
   rect(0, 0, width, plotH);
-  xa.render(color(255, 0, 0));
-  ya.render(color(0, 255, 0));
-  za.render(color(0, 0, 255));
+  xa.render(red, xaq);
+  ya.render(green, yaq);
+  za.render(blue, zaq);
 
   rect(0, plotH, width, plotH);
-  xr.render(color(255, 0, 0));
-  yr.render(color(0, 255, 0));
-  zr.render(color(0, 0, 255));
+  xr.render(red, xrq);
+  yr.render(green, yrq);
+  zr.render(blue, zrq);
 
   lights();
   directionalLight(51, 102, 126, -1, 0, 0);
@@ -182,9 +173,9 @@ void oscEvent(OscMessage theOscMessage) {
 
       if (lacc != null) {
         lacc.set(x, y, z);
-        xa.addSample(x);
-        ya.addSample(y);
-        za.addSample(z);
+        addSample(x, xaq, -16384,16384); 
+        addSample(y, yaq, -16384,16384);
+        addSample(z, zaq, -16384,16384);
       }
     }
   }
@@ -199,10 +190,16 @@ void oscEvent(OscMessage theOscMessage) {
 
       if (rot != null) {
         rot.set(x, y, z);
-        xr.addSample(x);
-        yr.addSample(y);
-        zr.addSample(z);
+        addSample(x, xrq, -16384,16384); 
+        addSample(y, yrq, -16384,16384);
+        addSample(z, zrq, -16384,16384);
       }
     }
   }
 }
+
+  void addSample(float val, LinkedList fifo, int min, int max){
+    float v = map(val, min, max, -1.0, 1.0);
+    fifo.add(v);
+    if(fifo.size() > MAX_QUEUE_SIZE) fifo.remove();
+  }
