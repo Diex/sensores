@@ -104,12 +104,14 @@ void draw() {
   background(0);
   fill(127, 127, 127);
   noStroke();
-  rect(0, 0, plotW, 6 * plotH);
+  rect(0, 0, plotW, 3 * plotH);
   
   xa.render(red, xaq);
   ya.render(green, yaq);
   za.render(blue, zaq);
-
+  
+  translate(0,10,0);
+  rect(0, 3*plotH, plotW, 3 * plotH);
   xr.render(red, xrq);
   yr.render(green, yrq);
   zr.render(blue, zrq);
@@ -129,7 +131,10 @@ void draw() {
   float[] axis = q.toAxisAngle();
   // angle + x y z 
   rotate(axis[0], -axis[1], axis[3], axis[2]);
+  translate(0, -100,0);
   shape(glass);
+  translate(0, 100,0);
+  
   strokeWeight(2);
   stroke(255, 0, 0);  // red
   line(0, 0, 0, 100, 0, 0);
@@ -137,6 +142,7 @@ void draw() {
   line(0, 0, 0, 0, 100, 0);
   stroke(0, 255, 0); // green
   line(0, 0, 0, 0, 0, 100);
+  
   
         addSample(lacc.x, xaq, -16384,16384); 
         addSample(lacc.y, yaq, -16384,16384);

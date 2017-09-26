@@ -6,7 +6,7 @@ class Plot {
   int h = 0;
   
   PVector origin = new PVector();
-
+  float scale = 10.;
   Plot(int x, int y, int w, int h) {
     
     this.w = w;
@@ -30,7 +30,7 @@ class Plot {
       int x1 = px;
       int x2 = x + 1;
       float y1 = py; //h * (l.hasNext() ? (float) l.next() : 0.0);
-      float y2 = h * (l.hasNext() ? (float) l.next() : 0.0);
+      float y2 = h * scale * (l.hasNext() ? (float) l.next() : 0.0);
       
       line(x1,y1,x2,y2);
       py = y2;
