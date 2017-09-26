@@ -59,13 +59,22 @@ void initDevice() {
   // obtenidos empiricamente usando el metodo MPU_Zero y luego usando MPU_raw para comprobar
   // que el sensor apoyado en la mesa con los chips para arriba da:
   // [0 0 1] [0 0 0] 
-    mpu.setXAccelOffset(-4105);
-    mpu.setYAccelOffset(1525);
-    mpu.setZAccelOffset(1569);
+//    mpu.setXAccelOffset(-4105);
+//    mpu.setYAccelOffset(1525);
+//    mpu.setZAccelOffset(1569);
+//    
+//    mpu.setXGyroOffset(52);
+//    mpu.setYGyroOffset(-4);
+//    mpu.setZGyroOffset(19);
+
+    // sensor 2
+    mpu.setXAccelOffset(-4787);
+    mpu.setYAccelOffset(123);
+    mpu.setZAccelOffset(1239);
     
-    mpu.setXGyroOffset(52);
-    mpu.setYGyroOffset(-4);
-    mpu.setZGyroOffset(19);
+    mpu.setXGyroOffset(-1119);
+    mpu.setYGyroOffset(-148);
+    mpu.setZGyroOffset(9);
   
 
 }
@@ -108,7 +117,16 @@ void debug(){
             Serial.print("\t");
             Serial.println(ypr[2] * 180/M_PI);
         #endif
-
+        #ifdef OUTPUT_GET_GYRO
+        //uint8_t MPU6050::dmpGetGyro(int16_t *data, const uint8_t* packet) {        
+//            mpu.dmpGetGyro(&gyro, fifoBuffer);
+            Serial.print("gyro\t");
+            Serial.print(gyro[0]);
+            Serial.print("\t");
+            Serial.print(gyro[1]);
+            Serial.print("\t");
+            Serial.println(gyro[2]);
+        #endif
 
         #ifdef OUTPUT_READABLE_REALACCEL
             // display real acceleration, adjusted to remove gravity

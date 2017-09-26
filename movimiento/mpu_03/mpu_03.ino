@@ -112,7 +112,7 @@ VectorInt16 waccel;    // [x, y, z]            world-frame accel sensor measurem
 VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
-
+int32_t gyro[3]; 
 
 // debuggin
 #include "configs.h"
@@ -177,6 +177,7 @@ void loop() {
 
     //---
     sendLocalAcceleration();
+    sendGyro();
 
   }
 
@@ -213,6 +214,25 @@ void loop() {
   }
 }
 
+
+void sendGyro(){
+  // leo el quat y lo mando por osc
+   gyro[0] = mpu.getRotationX();
+   gyro[1] = mpu.getRotationY();
+   gyro[2] = mpu.getRotationZ();
+//    mpu.dmpGetGyro(&gyro, fifoBuffer);
+    // read btnInput and send OSC
+    OSCMessage msgOut("/1/rot");
+    msgOut.add(gyro[0]);
+    msgOut.add(gyro[1]);
+    msgOut.add(gyro[2]);
+
+    Udp.beginPacket(destIp, destPort);
+    msgOut.send(Udp);
+    Udp.endPacket();
+    msgOut.empty();
+
+}
 void sendOrientationMessage(){
   // leo el quat y lo mando por osc
     mpu.dmpGetQuaternion(&orientation, fifoBuffer);

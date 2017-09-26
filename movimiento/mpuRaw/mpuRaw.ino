@@ -94,14 +94,26 @@ void setup() {
 
     // use the code below to change accel/gyro offset values
 
+    // para el sensor vertical tengo :
+//    accelgyro.setXAccelOffset(-4105);
+//    accelgyro.setYAccelOffset(1525);
+//    accelgyro.setZAccelOffset(1569);
+//    
+//    accelgyro.setXGyroOffset(52);
+//    accelgyro.setYGyroOffset(-4);
+//    accelgyro.setZGyroOffset(19);
 
-    accelgyro.setXAccelOffset(-4105);
-    accelgyro.setYAccelOffset(1525);
-    accelgyro.setZAccelOffset(1569);
+// y para el horizontal:
+//.................... [-4787,-4786] --> [-5,15]  [123,123] --> [-11,15]  [1239,1240] --> [16369,16391] [-1119,-1119] --> [-3,6]  [-148,-147] --> [-2,3]  [9,10] --> [-88,4]
+//-------------- done --------------
+    accelgyro.setXAccelOffset(-4787);
+    accelgyro.setYAccelOffset(123);
+    accelgyro.setZAccelOffset(1239);
     
-    accelgyro.setXGyroOffset(52);
-    accelgyro.setYGyroOffset(-4);
-    accelgyro.setZGyroOffset(19);
+    accelgyro.setXGyroOffset(-1119);
+    accelgyro.setYGyroOffset(-148);
+    accelgyro.setZGyroOffset(9);
+
     
     // configure Arduino LED for
     pinMode(LED_PIN, OUTPUT);
