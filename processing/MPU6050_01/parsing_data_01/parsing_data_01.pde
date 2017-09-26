@@ -16,8 +16,9 @@ import netP5.*;
 OscP5 oscP5;
 NetAddress myRemoteLocation;
 Quaternion q;
-static final int MAX_QUEUE_SIZE = 2000;
-int plotH = 40;
+static final int MAX_QUEUE_SIZE = 256;
+int plotH = 30;
+int plotW = MAX_QUEUE_SIZE;
 
 // ------------------------
 PVector lacc;
@@ -61,27 +62,25 @@ void setup() {
   myRemoteLocation = new NetAddress("127.0.0.1", 8000);
   q = new Quaternion();
   lacc = new PVector();
-  xa = new Plot(width, plotH);
-  ya = new Plot(width, plotH);
-  za = new Plot(width, plotH);
+  xa = new Plot(0, 0, plotW, plotH);
+  ya = new Plot(0, plotH, plotW, plotH);
+  za = new Plot(0, 2 * plotH, plotW, plotH);
   
   rot = new PVector();
 
-  xr = new Plot(width, plotH);
-  xr.origin.set(0, plotH);
-  yr = new Plot(width, plotH);
-  yr.origin.set(0, plotH);
-  zr = new Plot(width, plotH);
-  zr.origin.set(0, plotH);
+  xr = new Plot(0, 3 * plotH, plotW, plotH);  
+  yr = new Plot(0, 4 * plotH, plotW, plotH);  
+  zr = new Plot(0, 5 * plotH, plotW, plotH);
+  
 
-  for(int i = 0; i < MAX_QUEUE_SIZE; i++){
-    xaq.add(0.0);
-    yaq.add(0.0);
-    zaq.add(0.0);
-    xrq.add(0.0);
-    yrq.add(0.0);
-    zrq.add(0.0);
-  }
+  //for(int i = 0; i < MAX_QUEUE_SIZE; i++){
+  //  xaq.add(0.0);
+  //  yaq.add(0.0);
+  //  zaq.add(0.0);
+  //  xrq.add(0.0);
+  //  yrq.add(0.0);
+  //  zrq.add(0.0);
+  //}
 
   
 
@@ -105,12 +104,12 @@ void draw() {
   background(0);
   fill(127, 127, 127);
   noStroke();
-  rect(0, 0, width, plotH);
+  rect(0, 0, plotW, 6 * plotH);
+  
   xa.render(red, xaq);
   ya.render(green, yaq);
   za.render(blue, zaq);
 
-  rect(0, plotH, width, plotH);
   xr.render(red, xrq);
   yr.render(green, yrq);
   zr.render(blue, zrq);
@@ -138,6 +137,14 @@ void draw() {
   line(0, 0, 0, 0, 100, 0);
   stroke(0, 255, 0); // green
   line(0, 0, 0, 0, 0, 100);
+  
+        addSample(lacc.x, xaq, -16384,16384); 
+        addSample(lacc.y, yaq, -16384,16384);
+        addSample(lacc.z, zaq, -16384,16384);
+        
+        addSample(rot.x, xrq, -16384,16384); 
+        addSample(rot.y, yrq, -16384,16384);
+        addSample(rot.z, zrq, -16384,16384);
 }
 
 
@@ -173,9 +180,7 @@ void oscEvent(OscMessage theOscMessage) {
 
       if (lacc != null) {
         lacc.set(x, y, z);
-        addSample(x, xaq, -16384,16384); 
-        addSample(y, yaq, -16384,16384);
-        addSample(z, zaq, -16384,16384);
+        
       }
     }
   }
@@ -190,9 +195,7 @@ void oscEvent(OscMessage theOscMessage) {
 
       if (rot != null) {
         rot.set(x, y, z);
-        addSample(x, xrq, -16384,16384); 
-        addSample(y, yrq, -16384,16384);
-        addSample(z, zrq, -16384,16384);
+
       }
     }
   }
