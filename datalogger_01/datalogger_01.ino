@@ -14,6 +14,7 @@ bool PM;
 bool Century = false;
 byte ADay, AHour, AMinute, ASecond, ABits;
 bool ADy, A12h, Apm;
+boolean gotTrouble = false;
 
 void setup() {
   Wire.begin();
@@ -24,6 +25,7 @@ void setup() {
 
   if (!SD.begin(chipSelect)) {
     Serial.println("Card failed, or not present");
+    gotTrouble = true;
     return;
   }
 
@@ -33,6 +35,8 @@ void setup() {
 
 
 void loop() {
+  if(gotTrouble) return;
+  
   String dataString = "";
 
   dataString += "20";
@@ -53,6 +57,7 @@ void loop() {
   dataString += ",";
   dataString += Clock.getTemperature();
   dataString += ',';
+
   // Tell whether the time is (likely to be) valid
   if (Clock.oscillatorCheck()) {
     dataString += "osc:OK";
@@ -60,10 +65,21 @@ void loop() {
     dataString += "osc:FUCK";
   }
 
-  dataString += ',';
-  dataString += analogRead(A0);
+  
+  // ----------------------------------------
+  accRead();
+
+  dataString += ",";
+  dataString += String(value_x, 7);
+  dataString += ",";
+  dataString += String(value_y, 7);
+  dataString += ",";
+  dataString += String(value_z, 7);
+  
+  // ----------------------------------------
 
 
+  // uso un archivo por dia
   String filename = "20";
   filename += Clock.getYear();
   filename += Clock.getMonth(Century);
@@ -83,9 +99,10 @@ void loop() {
   else {
     Serial.print("error opening: ");
     Serial.println(filename);
+    gotTrouble = true;
   }
   Serial.println(dataString);
-  accRead();
+  
   delay(100);
 }
 

@@ -54,6 +54,11 @@ xv = floatMap(value_x, min_x, max_x, -1, 1);
 yv = floatMap(value_y, min_y, max_y, -1, 1);
 zv = floatMap(value_z, min_z, max_z, -1, 1);
 
+
+angle_x = atan2(-yv,-zv)*57.2957795+180;
+angle_y =atan2(-xv,-zv)*57.2957795+180;
+angle_z =atan2(-yv,-xv)*57.2957795+180;
+
 Serial.print(xv, 5);
 Serial.print("\t");
 Serial.print(yv, 5);
@@ -61,12 +66,6 @@ Serial.print("\t");
 Serial.print(zv, 5);
 Serial.print("\n");
 
-
-
-
-angle_x = atan2(-yv,-zv)*57.2957795+180;
-angle_y =atan2(-xv,-zv)*57.2957795+180;
-angle_z =atan2(-yv,-xv)*57.2957795+180;
 
 
 
